@@ -56,7 +56,9 @@ func main() {
 func queryRange(fg *lxi.Device, r []string) {
 	for _, q := range r {
 		ws := fmt.Sprintf("%s?", q)
+		log.Printf("Querying %s", ws)
 		s, err := fg.Query(ws)
+		log.Printf("Completed %s query", ws)
 		if err != nil {
 			log.Printf("Error reading: %v", err)
 		} else {

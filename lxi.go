@@ -6,7 +6,7 @@
 package lxi
 
 import (
-	"errors"
+	"bufio"
 	"fmt"
 	"net"
 )
@@ -56,5 +56,7 @@ func (d *Device) WriteString(s string) (n int, err error) {
 
 // Query queries the device using the Read and Write methods.
 func (d *Device) Query(s string) (value string, err error) {
-	return "", errors.New("query method not implemented for lxi device")
+	query := fmt.Sprintf("%s\n", s)
+	fmt.Fprintf(d.conn, query)
+	return bufio.NewReader(d.conn).ReadString('\n')
 }
