@@ -63,7 +63,7 @@ func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
 	}
 
 	if matchMap["port"] != "" {
-		port, err := strconv.ParseUint(matchMap["port"], 0, 10)
+		port, err := strconv.ParseUint(matchMap["port"], 10, 64)
 		if err != nil {
 			return visa, errors.New("visa: port error")
 		}

@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"time"
 
-	"github.com/gotmc/usbtmc"
+	"github.com/gotmc/lxi"
 )
 
 func main() {
@@ -20,7 +19,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}
-	log.Printf("%.2fs to create new device.\n", time.Since(start).Seconds())
 
 	// Configure function generator
 	fg.WriteString("*CLS\n")
@@ -48,18 +46,14 @@ func main() {
 	// Query using the query method
 	queryRange(fg, queries)
 
-	// Close the function generator and USBTMC context and check for errors.
+	// Close the function generator and check for errors.
 	err = fg.Close()
 	if err != nil {
 		log.Printf("error closing fg: %s", err)
 	}
-	err = ctx.Close()
-	if err != nil {
-		log.Printf("Error closing context: %s", err)
-	}
 }
 
-func queryRange(fg *usbtmc.Device, r []string) {
+func queryRange(fg *lxi.Device, r []string) {
 	for _, q := range r {
 		ws := fmt.Sprintf("%s?", q)
 		s, err := fg.Query(ws)
