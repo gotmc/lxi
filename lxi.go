@@ -19,18 +19,18 @@ type Device struct {
 
 // NewDevice opens a TCPIP Device using the given VISA address resource string.
 func NewDevice(address string) (*Device, error) {
-	var d *Device
+	var d Device
 	v, err := NewVisaResource(address)
 	if err != nil {
-		return d, err
+		return &d, err
 	}
 	tcpAddress := fmt.Sprintf("%s:%d", v.hostAddress, v.port)
-	conn, err := net.Dial("tcp", tcpAddress)
+	c, err := net.Dial("tcp", tcpAddress)
 	if err != nil {
-		return d, err
+		return &d, err
 	}
-	d.conn = conn
-	return d, nil
+	d.conn = c
+	return &d, nil
 }
 
 // Write writes the given data to the network connection.
