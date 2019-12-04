@@ -7,7 +7,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 
 	"github.com/gotmc/lxi"
@@ -15,7 +14,7 @@ import (
 
 func main() {
 
-	fg, err := lxi.NewDevice("TCPIP0::10.12.100.150::5025::SOCKET")
+	fg, err := lxi.NewDevice("TCPIP0::10.12.112.7::5025::SOCKET")
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}
@@ -23,27 +22,13 @@ func main() {
 	// Configure function generator
 	fg.WriteString("*CLS\n")
 	fg.WriteString("burst:state off\n")
-	fg.Write([]byte("apply:sinusoid 2340, 0.1, 0.0\n")) // Write using byte slice
-	io.WriteString(fg, "burst:internal:period 0.112\n") // WriteString using io's Writer interface
-	fg.WriteString("burst:internal:period 0.112\n")     // WriteString
-	fg.WriteString("burst:ncycles 131\n")
-	fg.WriteString("burst:state on\n")
-
-	// Query using a write and then a read.
-	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
-	for _, q := range queries {
-		ws := fmt.Sprintf("%s?\n", q)
-		fg.WriteString(ws)
-		var p [512]byte
-		bytesRead, err := fg.Read(p[:])
-		if err != nil {
-			log.Printf("Error reading: %v", err)
-		} else {
-			log.Printf("Read %d bytes for %s? = %s", bytesRead, q, p)
-		}
-	}
+	fg.Write([]byte("apply:sinusoid 100, 0.1, 0.0\n")) // Write using byte slice
+	fg.WriteString("burst:internal:period 0.224\n")    // WriteString
+	fg.WriteString("burst:ncycles 11\n")
+	fg.WriteString("BURS:STAT ON\n")
 
 	// Query using the query method
+	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
 	queryRange(fg, queries)
 
 	// Close the function generator and check for errors.
