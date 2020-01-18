@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 // Device models an LXI device, which is currently just a TCPIP socket
@@ -50,13 +51,27 @@ func (d *Device) Close() error {
 
 // WriteString writes a string using the underlying network connection.
 func (d *Device) WriteString(s string) (n int, err error) {
-	// FIXME(mdr): Is WriteString required?
 	return d.Write([]byte(s))
 }
 
-// Query queries the device using the Read and Write methods.
-func (d *Device) Query(s string) (value string, err error) {
-	query := fmt.Sprintf("%s\n", s)
-	fmt.Fprintf(d.conn, query)
+// Command sends the SCPI/ASCII command to the underlying network connection. A
+// newline character is automatically added to the end of the string.
+func (d *Device) Command(format string, a ...interface{}) error {
+	cmd := format
+	if a != nil {
+		cmd = fmt.Sprintf(format, a...)
+	}
+	_, err := d.WriteString(strings.TrimSpace(cmd) + "\n")
+	return err
+}
+
+// Query writes the given string to the underlying network connection and
+// returns a string. A newline character is automatically added to the query
+// command sent to the instrument.
+func (d *Device) Query(cmd string) (string, error) {
+	err := d.Command(cmd)
+	if err != nil {
+		return "", err
+	}
 	return bufio.NewReader(d.conn).ReadString('\n')
 }

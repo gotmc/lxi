@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/gotmc/lxi"
@@ -20,12 +21,14 @@ func main() {
 	}
 
 	// Configure function generator
-	fg.WriteString("*CLS\n")
-	fg.WriteString("burst:state off\n")
-	fg.Write([]byte("apply:sinusoid 100, 0.1, 0.0\n")) // Write using byte slice
-	fg.WriteString("burst:internal:period 0.224\n")    // WriteString
-	fg.WriteString("burst:ncycles 11\n")
-	fg.WriteString("BURS:STAT ON\n")
+	numCycles := 131
+	period := 0.112
+	fg.WriteString("*CLS\n")                              // Write using lxi.WriteString
+	io.WriteString(fg, "burst:state off\n")               // Write using io.WriteString
+	fg.Write([]byte("apply:sinusoid 2340, 0.1, 0.0\n"))   // Write using lxi.Write
+	fmt.Fprintf(fg, "burst:internal:period %f\n", period) // Write using fmt.Fprint
+	fg.Command("burst:ncycles %d", numCycles)             // Write using lxi.Command
+	fg.Command("burst:state on")                          // Command appends a newline.
 
 	// Query using the query method
 	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
