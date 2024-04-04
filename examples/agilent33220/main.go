@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 The lxi developers. All rights reserved.
+// Copyright (c) 2017-2024 The lxi developers. All rights reserved.
 // Project site: https://github.com/gotmc/lxi
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -6,6 +6,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,7 +16,17 @@ import (
 
 func main() {
 
-	fg, err := lxi.NewDevice("TCPIP0::10.12.112.7::5025::SOCKET")
+	var ip string
+	flag.StringVar(
+		&ip,
+		"ip",
+		"TCPIP0::10.0.2.100::5025::SOCKET",
+		"VISA address TCPIP0::<ip>::5025::SOCKET",
+	)
+	flag.Parse()
+
+	log.Printf("Using IP: %s", ip)
+	fg, err := lxi.NewDevice(ip)
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}
