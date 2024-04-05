@@ -16,22 +16,21 @@ import (
 // interface. An LXI Device also implements the ivi.Driver interface.
 type Device struct {
 	conn net.Conn
+	rd   *bufio.Reader
 }
 
 // NewDevice opens a TCPIP Device using the given VISA address resource string.
 func NewDevice(address string) (*Device, error) {
-	var d Device
 	v, err := NewVisaResource(address)
 	if err != nil {
-		return &d, err
+		return nil, err
 	}
 	tcpAddress := fmt.Sprintf("%s:%d", v.hostAddress, v.port)
 	c, err := net.Dial("tcp", tcpAddress)
 	if err != nil {
-		return &d, err
+		return nil, err
 	}
-	d.conn = c
-	return &d, nil
+	return &Device{conn: c, rd: bufio.NewReader(c)}, nil
 }
 
 // Write writes the given data to the network connection.
@@ -41,12 +40,15 @@ func (d *Device) Write(p []byte) (n int, err error) {
 
 // Read reads from the network connection into the given byte slice.
 func (d *Device) Read(p []byte) (n int, err error) {
-	return d.conn.Read(p)
+	return d.rd.Read(p)
 }
 
 // Close closes the underlying network connection.
 func (d *Device) Close() error {
-	return d.conn.Close()
+	d.rd = nil
+	c := d.conn
+	d.conn = nil
+	return c.Close()
 }
 
 // WriteString writes a string using the underlying network connection.
@@ -73,5 +75,5 @@ func (d *Device) Query(cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return bufio.NewReader(d.conn).ReadString('\n')
+	return d.rd.ReadString('\n')
 }
