@@ -26,7 +26,7 @@ cover:
 # Build and run Agilent 33220A example application.
 a33220 ip:
   env go build -o ./examples/agilent33220/agilent33220 ./examples/agilent33220/
-  ./examples/agilent33220/agilent33220 -ip=TCPIP0::{{ip}}::5025::SOCKET
+  ./examples/agilent33220/agilent33220 -ip={{ip}}
 
 # List the outdated go modules.
 outdated:

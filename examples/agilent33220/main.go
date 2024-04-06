@@ -16,17 +16,20 @@ import (
 
 func main() {
 
+	// Get IP address from CLI flag.
 	var ip string
 	flag.StringVar(
 		&ip,
 		"ip",
-		"TCPIP0::10.0.2.100::5025::SOCKET",
-		"VISA address TCPIP0::<ip>::5025::SOCKET",
+		"192.168.1.100",
+		"IP address of Keysight 33220A",
 	)
 	flag.Parse()
 
-	log.Printf("Using IP: %s", ip)
-	fg, err := lxi.NewDevice(ip)
+	// Create a new LXI device
+	address := fmt.Sprintf("TCPIP0::%s::5025::SOCKET", ip)
+	log.Printf("Using VISA address: %s", address)
+	fg, err := lxi.NewDevice(address)
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}

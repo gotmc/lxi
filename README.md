@@ -11,10 +11,11 @@ standard.
 
 This packages enables controlling LXI compatible test equipment (e.g.,
 oscilloscopes, function generators, multimeters, etc.) over Ethernet. While this
-package can be used by itself, it also serves to provide an Instrument interface
-for both the [ivi][] and [visa][] packages. The [ivi][] package provides
-standardized APIs for programming test instruments following the
-[Interchangeable Virtual Instrument (IVI) standard][ivi-specs].
+package can be used by itself to send [SCPI][] commands to a piece of test
+equipment, it also serves to provide an Instrument interface for both the
+[ivi][] and [visa][] packages. The [ivi][] package provides standardized APIs
+for programming test instruments following the [Interchangeable Virtual
+Instrument (IVI) standard][ivi-specs].
 
 ## Installation
 
@@ -86,4 +87,5 @@ $ just cover
 [pull request]: https://help.github.com/articles/using-pull-requests
 [report badge]: https://goreportcard.com/badge/github.com/gotmc/lxi
 [report card]: https://goreportcard.com/report/github.com/gotmc/lxi
+[scpi]: http://www.ivifoundation.org/scpi/
 [visa]: https://github.com/gotmc/visa
