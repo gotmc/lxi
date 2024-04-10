@@ -15,8 +15,9 @@ import (
 // Device models an LXI device, which is currently just a TCPIP socket
 // interface. An LXI Device also implements the ivi.Driver interface.
 type Device struct {
-	conn net.Conn
-	rd   *bufio.Reader
+	EndMark byte
+	conn    net.Conn
+	rd      *bufio.Reader
 }
 
 // NewDevice opens a TCPIP Device using the given VISA address resource string.
@@ -30,7 +31,7 @@ func NewDevice(address string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Device{conn: c, rd: bufio.NewReader(c)}, nil
+	return &Device{EndMark: '\n', conn: c, rd: bufio.NewReader(c)}, nil
 }
 
 // Write writes the given data to the network connection.
@@ -51,19 +52,21 @@ func (d *Device) Close() error {
 	return c.Close()
 }
 
-// WriteString writes a string using the underlying network connection.
+// WriteString writes a string using the underlying network connection. An end
+// mark character, such as a newline, is not added to the string being written.
 func (d *Device) WriteString(s string) (n int, err error) {
 	return d.Write([]byte(s))
 }
 
-// Command sends the SCPI/ASCII command to the underlying network connection. A
-// newline character is automatically added to the end of the string.
+// Command sends the SCPI/ASCII command to the underlying network connection.
+// The Device's EndMark character (newline by default) is automatically added
+// to the end of the string.
 func (d *Device) Command(format string, a ...interface{}) error {
 	cmd := format
 	if a != nil {
 		cmd = fmt.Sprintf(format, a...)
 	}
-	_, err := d.WriteString(strings.TrimSpace(cmd) + "\n")
+	_, err := d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))
 	return err
 }
 
@@ -75,5 +78,5 @@ func (d *Device) Query(cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return d.rd.ReadString('\n')
+	return d.rd.ReadString(d.EndMark)
 }
