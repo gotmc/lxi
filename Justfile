@@ -23,11 +23,14 @@ cover:
 	go test ./... -coverprofile=coverage.out
 	go tool cover -html=coverage.out
 
-# Build and run Agilent 33220A example application.
-a33220 ip:
-  env go build -o ./examples/agilent33220/agilent33220 ./examples/agilent33220/
-  ./examples/agilent33220/agilent33220 -ip={{ip}}
-
 # List the outdated go modules.
 outdated:
   go list -u -m all
+
+# Build and run the LXI Keysight 33220A example application.
+k33220 ip:
+  #!/usr/bin/env bash
+  echo '# IVI LXI Keysight 33220A Example Application'
+  cd {{justfile_directory()}}/examples/key33220
+  env go build -o key33220
+  ./key33220 -ip={{ip}}

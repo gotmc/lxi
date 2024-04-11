@@ -61,7 +61,7 @@ func (d *Device) WriteString(s string) (n int, err error) {
 // Command sends the SCPI/ASCII command to the underlying network connection.
 // The Device's EndMark character (newline by default) is automatically added
 // to the end of the string.
-func (d *Device) Command(format string, a ...interface{}) error {
+func (d *Device) Command(format string, a ...any) error {
 	cmd := format
 	if a != nil {
 		cmd = fmt.Sprintf(format, a...)

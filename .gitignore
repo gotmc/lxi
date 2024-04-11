@@ -1,5 +1,5 @@
 # Binaries for programs and plugins
-examples/agilent33220/agilent33220
+examples/key33220/key33220
 *.exe
 *.dll
 *.so
