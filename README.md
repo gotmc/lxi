@@ -1,7 +1,8 @@
 # lxi
 
-Go-based implementation of the LAN eXtensions for Instrumentation (LXI)
-standard.
+Go-based implementation of the LAN eXtensions for Instrumentation (LXI) standard
+to send SCPI commands or to provide an interface for Interchangeable Virtual
+Instrument (IVI) drivers.
 
 [![GoDoc][godoc badge]][godoc link]
 [![Go Report Card][report badge]][report card]
