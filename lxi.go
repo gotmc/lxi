@@ -7,6 +7,7 @@ package lxi
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -26,7 +27,7 @@ func NewDevice(address string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	tcpAddress := fmt.Sprintf("%s:%d", v.hostAddress, v.port)
+	tcpAddress := net.JoinHostPort(v.hostAddress, fmt.Sprintf("%d", v.port))
 	c, err := net.Dial("tcp", tcpAddress)
 	if err != nil {
 		return nil, err
@@ -60,8 +61,15 @@ func (d *Device) WriteString(s string) (n int, err error) {
 
 // Command sends the SCPI/ASCII command to the underlying network connection.
 // The Device's EndMark character (newline by default) is automatically added
-// to the end of the string.
-func (d *Device) Command(format string, a ...any) error {
+// to the end of the string. The context deadline, if set, is applied to the
+// underlying network connection.
+func (d *Device) Command(ctx context.Context, format string, a ...any) error {
+	deadline, ok := ctx.Deadline()
+	if ok {
+		if err := d.conn.SetWriteDeadline(deadline); err != nil {
+			return err
+		}
+	}
 	cmd := format
 	if a != nil {
 		cmd = fmt.Sprintf(format, a...)
@@ -72,11 +80,18 @@ func (d *Device) Command(format string, a ...any) error {
 
 // Query writes the given string to the underlying network connection and
 // returns a string. A newline character is automatically added to the query
-// command sent to the instrument.
-func (d *Device) Query(cmd string) (string, error) {
-	err := d.Command(cmd)
+// command sent to the instrument. The context deadline, if set, is applied to
+// the underlying network connection for both the write and read operations.
+func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
+	err := d.Command(ctx, cmd)
 	if err != nil {
 		return "", err
+	}
+	deadline, ok := ctx.Deadline()
+	if ok {
+		if err := d.conn.SetReadDeadline(deadline); err != nil {
+			return "", err
+		}
 	}
 	return d.rd.ReadString(d.EndMark)
 }

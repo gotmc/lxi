@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -35,18 +36,34 @@ func main() {
 	}
 
 	// Configure function generator
+	ctx := context.Background()
 	numCycles := 131
 	period := 0.112
-	fg.WriteString("*CLS\n")                              // Write using lxi.WriteString
-	io.WriteString(fg, "burst:state off\n")               // Write using io.WriteString
-	fg.Write([]byte("apply:sinusoid 2340, 0.1, 0.0\n"))   // Write using lxi.Write
-	fmt.Fprintf(fg, "burst:internal:period %f\n", period) // Write using fmt.Fprint
-	fg.Command("burst:ncycles %d", numCycles)             // Write using lxi.Command
-	fg.Command("burst:state on")                          // Command appends a newline.
+
+	if _, err = fg.WriteString("*CLS\n"); err != nil { // Write using lxi.WriteString
+		log.Fatal(err)
+	}
+	if _, err = io.WriteString(fg, "burst:state off\n"); err != nil { // Write using io.WriteString
+		log.Fatal(err)
+	}
+	// Write using lxi.Write
+	if _, err = fg.Write([]byte("apply:sinusoid 2340, 0.1, 0.0\n")); err != nil {
+		log.Fatal(err)
+	}
+	// Write using fmt.Fprint
+	if _, err = fmt.Fprintf(fg, "burst:internal:period %f\n", period); err != nil {
+		log.Fatal(err)
+	}
+	if err = fg.Command(ctx, "burst:ncycles %d", numCycles); err != nil { // Write using lxi.Command
+		log.Fatal(err)
+	}
+	if err = fg.Command(ctx, "burst:state on"); err != nil { // Command appends a newline.
+		log.Fatal(err)
+	}
 
 	// Query using the query method
 	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
-	queryRange(fg, queries)
+	queryRange(ctx, fg, queries)
 
 	// Close the function generator and check for errors.
 	err = fg.Close()
@@ -55,11 +72,11 @@ func main() {
 	}
 }
 
-func queryRange(fg *lxi.Device, r []string) {
+func queryRange(ctx context.Context, fg *lxi.Device, r []string) {
 	for _, q := range r {
 		ws := fmt.Sprintf("%s?", q)
 		log.Printf("Querying %s", ws)
-		s, err := fg.Query(ws)
+		s, err := fg.Query(ctx, ws)
 		log.Printf("Completed %s query", ws)
 		if err != nil {
 			log.Printf("Error reading: %v", err)
