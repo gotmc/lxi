@@ -111,10 +111,13 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 // goroutine watches for context cancellation and forces an immediate deadline
 // to unblock any pending I/O. The cleanup function stops the goroutine and
 // resets the deadline.
-func (d *Device) applyContext(ctx context.Context, setDeadline func(time.Time) error) (func(), error) {
+func (d *Device) applyContext(
+	ctx context.Context,
+	setDeadline func(time.Time) error,
+) (func(), error) {
 	noop := func() {}
 	if deadline, ok := ctx.Deadline(); ok {
-		return func() { setDeadline(time.Time{}) }, setDeadline(deadline)
+		return func() { _ = setDeadline(time.Time{}) }, setDeadline(deadline)
 	}
 	if ctx.Done() == nil {
 		return noop, nil
@@ -125,16 +128,17 @@ func (d *Device) applyContext(ctx context.Context, setDeadline func(time.Time) e
 	default:
 	}
 	done := make(chan struct{})
+	conn := d.conn
 	go func() {
 		select {
 		case <-ctx.Done():
-			d.conn.SetDeadline(time.Now())
+			_ = conn.SetDeadline(time.Now())
 		case <-done:
 		}
 	}()
 	cleanup := func() {
 		close(done)
-		setDeadline(time.Time{})
+		_ = setDeadline(time.Time{})
 	}
 	return cleanup, nil
 }
