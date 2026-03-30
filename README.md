@@ -41,30 +41,20 @@ Contributions are welcome! To contribute please:
 3. Code
 4. Submit a [pull request][]
 
+### Development Dependencies
+
+- [just][] - task runner that replaces [GNU Make][make]
+
 ### Testing
 
-Prior to submitting a [pull request][], please run the tests using either [GNU
-Make][make]:
-
-```bash
-$ make check
-$ make lint
-```
-
-or you can use [Just][]:
+Prior to submitting a [pull request][], please run:
 
 ```bash
 $ just check
 $ just lint
 ```
 
-To update and view the test coverage report using [Make][] run:
-
-```bash
-$ make cover
-```
-
-or you can use [Just][]:
+To update and view the test coverage report:
 
 ```bash
 $ just cover

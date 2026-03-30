@@ -9,17 +9,20 @@ Go package implementing the LAN eXtensions for Instrumentation (LXI) standard fo
 ## Build & Test Commands
 
 ```bash
-# Format, vet, and test
-just check        # or: make check
+# Format and vet
+just check
 
-# Verbose tests
-just checkv
+# Run unit tests (includes check, race detector, coverage)
+just unit
 
-# Lint (requires staticcheck)
-just lint         # or: make lint
+# Verbose unit tests
+just unit -v
+
+# Lint (requires golangci-lint, configured via .golangci.yaml)
+just lint
 
 # Test coverage (opens HTML report)
-just cover        # or: make cover
+just cover
 
 # Run single test
 go test -run TestParsingVisaResourceString ./...
