@@ -3,6 +3,10 @@
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
 
+// Package lxi provides a LAN eXtensions for Instrumentation (LXI) interface
+// for controlling test equipment over Ethernet ports using SCPI commands. It
+// implements the VISA LXI resource string format and serves as an instrument
+// driver for the ivi and visa packages.
 package lxi
 
 import (
@@ -53,17 +57,17 @@ func (d *Device) Close() error {
 	return c.Close()
 }
 
-// WriteString writes a string using the underlying network connection. An
-// endmark character, such as a newline, is not added to the string being
-// written.
+// WriteString writes a string to the underlying network connection. An endmark
+// character, such as a newline, is not automatically added to the end of the
+// string.
 func (d *Device) WriteString(s string) (n int, err error) {
 	return d.Write([]byte(s))
 }
 
 // Command sends the SCPI/ASCII command to the underlying network connection.
-// The Device's EndMark character (newline by default) is automatically added
-// to the end of the string. The context deadline, if set, is applied to the
-// underlying network connection.
+// An endmark character (newline by default) is automatically added to the end
+// of the string. The context deadline, if set, is applied to the underlying
+// network connection.
 func (d *Device) Command(ctx context.Context, format string, a ...any) error {
 	deadline, ok := ctx.Deadline()
 	if ok {
@@ -79,9 +83,9 @@ func (d *Device) Command(ctx context.Context, format string, a ...any) error {
 	return err
 }
 
-// Query writes the given string to the underlying network connection and
-// returns a string. The device's endmark character, newline by default, is
-// automatically added to the query command sent to the instrument. The string
+// Query writes the given SCPI/ASCII command to the underlying network
+// connection and returns the response string. The device's endmark character
+// (newline by default) is automatically added to the query command. The string
 // returned is not stripped of any whitespace. The context deadline, if set, is
 // applied to the underlying network connection for both the write and read
 // operations.
