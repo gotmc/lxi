@@ -28,15 +28,13 @@ func main() {
 	flag.Parse()
 
 	// Create a new LXI device
+	ctx := context.Background()
 	address := fmt.Sprintf("TCPIP0::%s::5025::SOCKET", ip)
 	log.Printf("Using VISA address: %s", address)
-	fg, err := lxi.NewDevice(address)
+	fg, err := lxi.NewDevice(ctx, address)
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}
-
-	// Configure function generator
-	ctx := context.Background()
 	numCycles := 131
 	period := 0.112
 

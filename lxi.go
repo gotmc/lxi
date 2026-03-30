@@ -27,13 +27,15 @@ type Device struct {
 }
 
 // NewDevice opens a TCPIP Device using the given VISA address resource string.
-func NewDevice(address string) (*Device, error) {
+// The context controls the timeout/deadline for the TCP connection attempt.
+func NewDevice(ctx context.Context, address string) (*Device, error) {
 	v, err := NewVisaResource(address)
 	if err != nil {
 		return nil, err
 	}
 	tcpAddress := net.JoinHostPort(v.hostAddress, fmt.Sprintf("%d", v.port))
-	c, err := net.Dial("tcp", tcpAddress)
+	var dialer net.Dialer
+	c, err := dialer.DialContext(ctx, "tcp", tcpAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +72,16 @@ func (d *Device) WriteString(s string) (n int, err error) {
 // of the string. The context deadline, if set, is applied to the underlying
 // network connection.
 func (d *Device) Command(ctx context.Context, format string, a ...any) error {
-	if err := d.applyContext(ctx, d.conn.SetWriteDeadline); err != nil {
+	cleanup, err := d.applyContext(ctx, d.conn.SetWriteDeadline)
+	if err != nil {
 		return err
 	}
-	defer d.conn.SetWriteDeadline(time.Time{})
+	defer cleanup()
 	cmd := format
 	if a != nil {
 		cmd = fmt.Sprintf(format, a...)
 	}
-	_, err := d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))
+	_, err = d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))
 	return err
 }
 
@@ -93,33 +96,45 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := d.applyContext(ctx, d.conn.SetReadDeadline); err != nil {
+	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
+	if err != nil {
 		return "", err
 	}
-	defer d.conn.SetReadDeadline(time.Time{})
+	defer cleanup()
 	return d.rd.ReadString(d.EndMark)
 }
 
-// applyContext sets a deadline on the connection using the provided setter. If
-// the context has a deadline, it is used directly. If the context has no
-// deadline but is already done, an error is returned. Otherwise, a goroutine
-// watches for context cancellation and forces an immediate deadline to unblock
-// any pending I/O.
-func (d *Device) applyContext(ctx context.Context, setDeadline func(time.Time) error) error {
+// applyContext sets a deadline on the connection using the provided setter and
+// returns a cleanup function that must be called when the I/O operation
+// completes. If the context has a deadline, it is used directly. If the context
+// has no deadline but is already done, an error is returned. Otherwise, a
+// goroutine watches for context cancellation and forces an immediate deadline
+// to unblock any pending I/O. The cleanup function stops the goroutine and
+// resets the deadline.
+func (d *Device) applyContext(ctx context.Context, setDeadline func(time.Time) error) (func(), error) {
+	noop := func() {}
 	if deadline, ok := ctx.Deadline(); ok {
-		return setDeadline(deadline)
+		return func() { setDeadline(time.Time{}) }, setDeadline(deadline)
 	}
 	if ctx.Done() == nil {
-		return nil
+		return noop, nil
 	}
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return noop, ctx.Err()
 	default:
 	}
+	done := make(chan struct{})
 	go func() {
-		<-ctx.Done()
-		d.conn.SetDeadline(time.Now())
+		select {
+		case <-ctx.Done():
+			d.conn.SetDeadline(time.Now())
+		case <-done:
+		}
 	}()
-	return nil
+	cleanup := func() {
+		close(done)
+		setDeadline(time.Time{})
+	}
+	return cleanup, nil
 }

@@ -36,3 +36,11 @@ The package has two core types:
 - **`VisaResource`** (`visa.go`): Parses VISA resource strings (format: `TCPIP<board>::<host>::<port>::SOCKET`) using regex. Only TCPIP/SOCKET interface type is supported.
 
 `NewDevice()` takes a VISA address string, parses it via `NewVisaResource()`, then dials a TCP connection.
+
+## Conventions
+
+- **Zero external dependencies** — only the Go standard library is used.
+- **Error prefixes** — errors use the format `"visa: ..."` or `"lxi: ..."` to identify their origin.
+- **Interfaces** — `Device` implements `io.Reader`, `io.Writer`, `io.Closer`, and `io.StringWriter`.
+- **Context handling** — `Command` and `Query` extract deadlines from `context.Context` and apply them to the TCP connection. A goroutine watches for cancellation on contexts without deadlines.
+- **Test pattern** — table-driven tests with structs defining inputs and expected outputs (see `visa_test.go`).
