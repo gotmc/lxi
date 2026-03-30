@@ -38,28 +38,31 @@ func main() {
 	numCycles := 131
 	period := 0.112
 
-	if _, err = fg.WriteString("*CLS\n"); err != nil { // Write using lxi.WriteString
+	// Write using lxi.WriteString, which doesn't append an endmark.
+	if _, err = fg.WriteString("*CLS\n"); err != nil {
 		log.Fatal(err)
 	}
-	if _, err = io.WriteString(fg, "burst:state off\n"); err != nil { // Write using io.WriteString
+	// Write using io.WriteString, which doesn't append an endmark.
+	if _, err = io.WriteString(fg, "burst:state off\n"); err != nil {
 		log.Fatal(err)
 	}
-	// Write using lxi.Write
+	// Write using lxi.Write, which doesn't append an endmark.
 	if _, err = fg.Write([]byte("apply:sinusoid 2340, 0.1, 0.0\n")); err != nil {
 		log.Fatal(err)
 	}
-	// Write using fmt.Fprint
+	// Write using fmt.Fprint, which doesn't append an endmark.
 	if _, err = fmt.Fprintf(fg, "burst:internal:period %f\n", period); err != nil {
 		log.Fatal(err)
 	}
-	if err = fg.Command(ctx, "burst:ncycles %d", numCycles); err != nil { // Write using lxi.Command
+	// Write using lxi.Command, which does append an endmark.
+	if err = fg.Command(ctx, "burst:ncycles %d", numCycles); err != nil {
 		log.Fatal(err)
 	}
-	if err = fg.Command(ctx, "burst:state on"); err != nil { // Command appends a newline.
+	if err = fg.Command(ctx, "burst:state on"); err != nil {
 		log.Fatal(err)
 	}
 
-	// Query using the query method
+	// Query using lxi.Query, which does append an endmark.
 	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
 	queryRange(ctx, fg, queries)
 
