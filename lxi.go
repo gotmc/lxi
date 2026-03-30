@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 // Device models an LXI device, which is currently just a TCPIP socket
@@ -69,12 +70,10 @@ func (d *Device) WriteString(s string) (n int, err error) {
 // of the string. The context deadline, if set, is applied to the underlying
 // network connection.
 func (d *Device) Command(ctx context.Context, format string, a ...any) error {
-	deadline, ok := ctx.Deadline()
-	if ok {
-		if err := d.conn.SetWriteDeadline(deadline); err != nil {
-			return err
-		}
+	if err := d.applyContext(ctx, d.conn.SetWriteDeadline); err != nil {
+		return err
 	}
+	defer d.conn.SetWriteDeadline(time.Time{})
 	cmd := format
 	if a != nil {
 		cmd = fmt.Sprintf(format, a...)
@@ -94,11 +93,33 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	deadline, ok := ctx.Deadline()
-	if ok {
-		if err := d.conn.SetReadDeadline(deadline); err != nil {
-			return "", err
-		}
+	if err := d.applyContext(ctx, d.conn.SetReadDeadline); err != nil {
+		return "", err
 	}
+	defer d.conn.SetReadDeadline(time.Time{})
 	return d.rd.ReadString(d.EndMark)
+}
+
+// applyContext sets a deadline on the connection using the provided setter. If
+// the context has a deadline, it is used directly. If the context has no
+// deadline but is already done, an error is returned. Otherwise, a goroutine
+// watches for context cancellation and forces an immediate deadline to unblock
+// any pending I/O.
+func (d *Device) applyContext(ctx context.Context, setDeadline func(time.Time) error) error {
+	if deadline, ok := ctx.Deadline(); ok {
+		return setDeadline(deadline)
+	}
+	if ctx.Done() == nil {
+		return nil
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	go func() {
+		<-ctx.Done()
+		d.conn.SetDeadline(time.Now())
+	}()
+	return nil
 }
