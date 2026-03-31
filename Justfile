@@ -66,7 +66,7 @@ tidy:
 [group('examples')]
 k33220 ip:
   #!/usr/bin/env bash
-  echo '# IVI LXI Keysight 33220A Example Application'
+  echo '# LXI Keysight 33220A Example Application'
   cd {{justfile_directory()}}/examples/key33220
   env go build -o key33220
   ./key33220 -ip={{ip}}
