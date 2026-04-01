@@ -103,7 +103,7 @@ func (d *Device) Command(ctx context.Context, cmd string, a ...any) error {
 		return err
 	}
 	defer cleanup()
-	if a != nil {
+	if len(a) > 0 {
 		cmd = fmt.Sprintf(cmd, a...)
 	}
 	_, err = d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))

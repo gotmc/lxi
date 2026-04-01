@@ -22,7 +22,6 @@ type VisaResource struct {
 	resourceClass  string
 }
 
-// NewVisaResource creates a new VisaResource using the given VISA resourceString.
 var visaResourceRe = regexp.MustCompile(
 	`^(?P<interfaceType>TCPIP)(?P<boardIndex>\d*)::` +
 		`(?P<hostAddress>[^\s:]+)::` +
@@ -30,6 +29,7 @@ var visaResourceRe = regexp.MustCompile(
 		`(?P<resourceClass>SOCKET)$`,
 )
 
+// NewVisaResource creates a new VisaResource using the given VISA resourceString.
 func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
 	visa = &VisaResource{
 		resourceString: resourceString,
