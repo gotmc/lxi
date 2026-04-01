@@ -6,6 +6,7 @@
 package lxi
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -99,7 +100,7 @@ func TestParsingVisaResourceString(t *testing.T) {
 					t.Fatalf("expected error containing %q, got nil", tc.errorSubstring)
 				}
 				if tc.errorSubstring != "" {
-					if got := err.Error(); !contains(got, tc.errorSubstring) {
+					if got := err.Error(); !strings.Contains(got, tc.errorSubstring) {
 						t.Errorf("error = %q, want substring %q", got, tc.errorSubstring)
 					}
 				}
@@ -125,17 +126,4 @@ func TestParsingVisaResourceString(t *testing.T) {
 			}
 		})
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && searchString(s, substr)
-}
-
-func searchString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
