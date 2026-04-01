@@ -7,6 +7,7 @@ package lxi
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,6 +21,12 @@ type VisaResource struct {
 	hostAddress    string
 	port           uint
 	resourceClass  string
+}
+
+// String returns the VISA resource string in canonical form.
+func (v *VisaResource) String() string {
+	return fmt.Sprintf("%s%d::%s::%d::%s",
+		v.interfaceType, v.boardIndex, v.hostAddress, v.port, v.resourceClass)
 }
 
 var visaResourceRe = regexp.MustCompile(

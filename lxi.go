@@ -3,10 +3,6 @@
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
 
-// Package lxi provides a LAN eXtensions for Instrumentation (LXI) interface
-// for controlling test equipment over Ethernet ports using SCPI commands. It
-// implements the VISA LXI resource string format and serves as an instrument
-// driver for the ivi and visa packages.
 package lxi
 
 import (

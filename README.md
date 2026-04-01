@@ -28,9 +28,8 @@ $ go get github.com/gotmc/lxi
 
 Documentation can be found at either:
 
-- <https://godoc.org/github.com/gotmc/lxi>
-- <http://localhost:6060/pkg/github.com/gotmc/lxi/> after running `$
-godoc -http=:6060`
+- <https://pkg.go.dev/github.com/gotmc/lxi>
+- <http://localhost:8080/github.com/gotmc/lxi/> after running `just docs`
 
 ## Contributing
 
@@ -62,8 +61,8 @@ $ just cover
 
 ## License
 
-[lxi][] is released under the MIT license. Please see the
-[LICENSE.txt][] file for more information.
+[lxi][] is released under the MIT license. Please see the [LICENSE.txt][] file
+for more information.
 
 [godoc badge]: https://godoc.org/github.com/gotmc/lxi?status.svg
 [godoc link]: https://godoc.org/github.com/gotmc/lxi
