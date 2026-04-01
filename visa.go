@@ -64,9 +64,10 @@ func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
 		visa.boardIndex = uint(boardIndex)
 	}
 
-	if matchMap["hostAddress"] != "" {
-		visa.hostAddress = matchMap["hostAddress"]
+	if matchMap["hostAddress"] == "" {
+		return visa, errors.New("visa: host address is required")
 	}
+	visa.hostAddress = matchMap["hostAddress"]
 
 	if matchMap["port"] != "" {
 		port, err := strconv.ParseUint(matchMap["port"], 10, 64)
