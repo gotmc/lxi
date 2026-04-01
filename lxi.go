@@ -42,6 +42,14 @@ func NewDevice(ctx context.Context, address string) (*Device, error) {
 	return &Device{EndMark: '\n', conn: c, rd: bufio.NewReader(c)}, nil
 }
 
+// Close closes the underlying network connection.
+func (d *Device) Close() error {
+	d.rd = nil
+	c := d.conn
+	d.conn = nil
+	return c.Close()
+}
+
 // Read reads from the network connection into the given byte slice.
 func (d *Device) Read(p []byte) (n int, err error) {
 	return d.rd.Read(p)
@@ -50,14 +58,6 @@ func (d *Device) Read(p []byte) (n int, err error) {
 // Write writes the given data to the network connection.
 func (d *Device) Write(p []byte) (n int, err error) {
 	return d.conn.Write(p)
-}
-
-// Close closes the underlying network connection.
-func (d *Device) Close() error {
-	d.rd = nil
-	c := d.conn
-	d.conn = nil
-	return c.Close()
 }
 
 // WriteString writes a string to the underlying network connection. An endmark
@@ -89,19 +89,19 @@ func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) 
 	return d.conn.Write(p)
 }
 
-// Command sends the SCPI/ASCII command to the underlying network connection.
-// An endmark character (newline by default) is automatically added to the end
-// of the string. The context deadline, if set, is applied to the underlying
-// network connection.
-func (d *Device) Command(ctx context.Context, format string, a ...any) error {
+// Command sends a SCPI/ASCII command to the underlying network connection. The
+// command can be optionally formatted according to a format specifier. An
+// endmark character, such as newline, is automatically added to the end of the
+// string. The context deadline, if set, is applied to the underlying network
+// connection.
+func (d *Device) Command(ctx context.Context, cmd string, a ...any) error {
 	cleanup, err := d.applyContext(ctx, d.conn.SetWriteDeadline)
 	if err != nil {
 		return err
 	}
 	defer cleanup()
-	cmd := format
 	if a != nil {
-		cmd = fmt.Sprintf(format, a...)
+		cmd = fmt.Sprintf(cmd, a...)
 	}
 	_, err = d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))
 	return err
