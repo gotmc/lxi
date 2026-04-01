@@ -13,6 +13,16 @@ import (
 	"strings"
 )
 
+// Sentinel errors returned by NewVisaResource.
+var (
+	ErrResourceFormat = errors.New("visa: resource string does not match expected format")
+	ErrInterfaceType  = errors.New("visa: interface type was not TCPIP")
+	ErrResourceClass  = errors.New("visa: resource class was not SOCKET")
+	ErrBoardIndex     = errors.New("visa: board index error")
+	ErrHostAddress    = errors.New("visa: host address is required")
+	ErrPort           = errors.New("visa: port error")
+)
+
 // VisaResource represents a VISA enabled piece of test equipment.
 type VisaResource struct {
 	resourceString string
@@ -41,7 +51,7 @@ func NewVisaResource(resourceString string) (*VisaResource, error) {
 	re := visaResourceRe
 	res := re.FindStringSubmatch(strings.ToUpper(resourceString))
 	if res == nil {
-		return nil, errors.New("visa: resource string does not match expected format")
+		return nil, ErrResourceFormat
 	}
 	subexpNames := re.SubexpNames()
 	matchMap := map[string]string{}
@@ -50,11 +60,11 @@ func NewVisaResource(resourceString string) (*VisaResource, error) {
 	}
 
 	if matchMap["interfaceType"] != "TCPIP" {
-		return nil, errors.New("visa: interface type was not TCPIP")
+		return nil, ErrInterfaceType
 	}
 
 	if matchMap["resourceClass"] != "SOCKET" {
-		return nil, errors.New("visa: resource class was not SOCKET")
+		return nil, ErrResourceClass
 	}
 
 	visa := &VisaResource{
@@ -66,20 +76,20 @@ func NewVisaResource(resourceString string) (*VisaResource, error) {
 	if matchMap["boardIndex"] != "" {
 		boardIndex, err := strconv.ParseUint(matchMap["boardIndex"], 0, 16)
 		if err != nil {
-			return nil, errors.New("visa: boardIndex error")
+			return nil, fmt.Errorf("visa: parsing board index: %w", err)
 		}
 		visa.boardIndex = uint(boardIndex)
 	}
 
 	if matchMap["hostAddress"] == "" {
-		return nil, errors.New("visa: host address is required")
+		return nil, ErrHostAddress
 	}
 	visa.hostAddress = matchMap["hostAddress"]
 
 	if matchMap["port"] != "" {
 		port, err := strconv.ParseUint(matchMap["port"], 10, 64)
 		if err != nil {
-			return nil, errors.New("visa: port error")
+			return nil, fmt.Errorf("visa: parsing port: %w", err)
 		}
 		visa.port = uint(port)
 	}

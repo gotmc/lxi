@@ -6,7 +6,7 @@
 package lxi
 
 import (
-	"strings"
+	"errors"
 	"testing"
 )
 
@@ -20,7 +20,7 @@ func TestParsingVisaResourceString(t *testing.T) {
 		port           uint
 		resourceClass  string
 		isError        bool
-		errorSubstring string
+		wantErr        error
 	}{
 		{
 			name:           "valid with board index 0",
@@ -71,25 +71,25 @@ func TestParsingVisaResourceString(t *testing.T) {
 			name:           "invalid interface type",
 			resourceString: "GPIB0::10.12.100.15::5025::SOCKET",
 			isError:        true,
-			errorSubstring: "does not match",
+			wantErr:        ErrResourceFormat,
 		},
 		{
 			name:           "invalid resource class",
 			resourceString: "TCPIP0::10.12.100.15::5025::INSTR",
 			isError:        true,
-			errorSubstring: "does not match",
+			wantErr:        ErrResourceFormat,
 		},
 		{
 			name:           "empty string",
 			resourceString: "",
 			isError:        true,
-			errorSubstring: "does not match",
+			wantErr:        ErrResourceFormat,
 		},
 		{
 			name:           "missing port and resource class",
 			resourceString: "TCPIP0::10.12.100.15",
 			isError:        true,
-			errorSubstring: "does not match",
+			wantErr:        ErrResourceFormat,
 		},
 	}
 	for _, tc := range testCases {
@@ -97,12 +97,10 @@ func TestParsingVisaResourceString(t *testing.T) {
 			resource, err := NewVisaResource(tc.resourceString)
 			if tc.isError {
 				if err == nil {
-					t.Fatalf("expected error containing %q, got nil", tc.errorSubstring)
+					t.Fatalf("expected error %v, got nil", tc.wantErr)
 				}
-				if tc.errorSubstring != "" {
-					if got := err.Error(); !strings.Contains(got, tc.errorSubstring) {
-						t.Errorf("error = %q, want substring %q", got, tc.errorSubstring)
-					}
+				if tc.wantErr != nil && !errors.Is(err, tc.wantErr) {
+					t.Errorf("error = %v, want %v", err, tc.wantErr)
 				}
 				return
 			}
