@@ -42,14 +42,14 @@ func NewDevice(ctx context.Context, address string) (*Device, error) {
 	return &Device{EndMark: '\n', conn: c, rd: bufio.NewReader(c)}, nil
 }
 
-// Write writes the given data to the network connection.
-func (d *Device) Write(p []byte) (n int, err error) {
-	return d.conn.Write(p)
-}
-
 // Read reads from the network connection into the given byte slice.
 func (d *Device) Read(p []byte) (n int, err error) {
 	return d.rd.Read(p)
+}
+
+// Write writes the given data to the network connection.
+func (d *Device) Write(p []byte) (n int, err error) {
+	return d.conn.Write(p)
 }
 
 // Close closes the underlying network connection.
@@ -65,6 +65,28 @@ func (d *Device) Close() error {
 // string.
 func (d *Device) WriteString(s string) (n int, err error) {
 	return d.Write([]byte(s))
+}
+
+// ReadContext reads from the network connection in the given byte slice in a
+// context aware manner.
+func (d *Device) ReadContext(ctx context.Context, p []byte) (n int, err error) {
+	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
+	if err != nil {
+		return 0, err
+	}
+	defer cleanup()
+	return d.rd.Read(p)
+}
+
+// WriteContext writes the given data to the network connection in a context
+// aware manner.
+func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) {
+	cleanup, err := d.applyContext(ctx, d.conn.SetWriteDeadline)
+	if err != nil {
+		return 0, err
+	}
+	defer cleanup()
+	return d.conn.Write(p)
 }
 
 // Command sends the SCPI/ASCII command to the underlying network connection.
