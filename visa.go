@@ -27,11 +27,26 @@ var (
 type VisaResource struct {
 	resourceString string
 	interfaceType  string
-	boardIndex     uint
+	boardIndex     int
 	hostAddress    string
-	port           uint
+	port           int
 	resourceClass  string
 }
+
+// InterfaceType returns the VISA interface type (e.g., "TCPIP").
+func (v *VisaResource) InterfaceType() string { return v.interfaceType }
+
+// BoardIndex returns the VISA board index.
+func (v *VisaResource) BoardIndex() int { return v.boardIndex }
+
+// HostAddress returns the hostname or IP address of the instrument.
+func (v *VisaResource) HostAddress() string { return v.hostAddress }
+
+// Port returns the TCP port number of the instrument.
+func (v *VisaResource) Port() int { return v.port }
+
+// ResourceClass returns the VISA resource class (e.g., "SOCKET").
+func (v *VisaResource) ResourceClass() string { return v.resourceClass }
 
 // String returns the VISA resource string in canonical form.
 func (v *VisaResource) String() string {
@@ -74,11 +89,11 @@ func NewVisaResource(resourceString string) (*VisaResource, error) {
 	}
 
 	if matchMap["boardIndex"] != "" {
-		boardIndex, err := strconv.ParseUint(matchMap["boardIndex"], 0, 16)
+		boardIndex, err := strconv.Atoi(matchMap["boardIndex"])
 		if err != nil {
 			return nil, fmt.Errorf("visa: parsing board index: %w", err)
 		}
-		visa.boardIndex = uint(boardIndex)
+		visa.boardIndex = boardIndex
 	}
 
 	if matchMap["hostAddress"] == "" {
@@ -87,11 +102,11 @@ func NewVisaResource(resourceString string) (*VisaResource, error) {
 	visa.hostAddress = matchMap["hostAddress"]
 
 	if matchMap["port"] != "" {
-		port, err := strconv.ParseUint(matchMap["port"], 10, 64)
+		port, err := strconv.Atoi(matchMap["port"])
 		if err != nil {
 			return nil, fmt.Errorf("visa: parsing port: %w", err)
 		}
-		visa.port = uint(port)
+		visa.port = port
 	}
 	return visa, nil
 }

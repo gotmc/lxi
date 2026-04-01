@@ -15,9 +15,9 @@ func TestParsingVisaResourceString(t *testing.T) {
 		name           string
 		resourceString string
 		interfaceType  string
-		boardIndex     uint
+		boardIndex     int
 		hostAddress    string
-		port           uint
+		port           int
 		resourceClass  string
 		isError        bool
 		wantErr        error
@@ -107,20 +107,24 @@ func TestParsingVisaResourceString(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if resource.interfaceType != tc.interfaceType {
-				t.Errorf("interfaceType = %q, want %q", resource.interfaceType, tc.interfaceType)
+			if resource.InterfaceType() != tc.interfaceType {
+				t.Errorf(
+					"InterfaceType() = %q, want %q", resource.InterfaceType(), tc.interfaceType,
+				)
 			}
-			if resource.boardIndex != tc.boardIndex {
-				t.Errorf("boardIndex = %d, want %d", resource.boardIndex, tc.boardIndex)
+			if resource.BoardIndex() != tc.boardIndex {
+				t.Errorf("BoardIndex() = %d, want %d", resource.BoardIndex(), tc.boardIndex)
 			}
-			if resource.hostAddress != tc.hostAddress {
-				t.Errorf("hostAddress = %q, want %q", resource.hostAddress, tc.hostAddress)
+			if resource.HostAddress() != tc.hostAddress {
+				t.Errorf("HostAddress() = %q, want %q", resource.HostAddress(), tc.hostAddress)
 			}
-			if resource.port != tc.port {
-				t.Errorf("port = %d, want %d", resource.port, tc.port)
+			if resource.Port() != tc.port {
+				t.Errorf("Port() = %d, want %d", resource.Port(), tc.port)
 			}
-			if resource.resourceClass != tc.resourceClass {
-				t.Errorf("resourceClass = %q, want %q", resource.resourceClass, tc.resourceClass)
+			if resource.ResourceClass() != tc.resourceClass {
+				t.Errorf(
+					"ResourceClass() = %q, want %q", resource.ResourceClass(), tc.resourceClass,
+				)
 			}
 		})
 	}
