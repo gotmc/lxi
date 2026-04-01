@@ -131,7 +131,7 @@ func TestQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Query error: %v", err)
 	}
-	want := "1.234\n"
+	want := "1.234"
 	if resp != want {
 		t.Errorf("Query response = %q, want %q", resp, want)
 	}

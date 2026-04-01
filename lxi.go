@@ -108,10 +108,10 @@ func (d *Device) Command(ctx context.Context, cmd string, a ...any) error {
 
 // Query writes the given SCPI/ASCII command to the underlying network
 // connection and returns the response string. The device's endmark character
-// (newline by default) is automatically added to the query command. The string
-// returned is not stripped of any whitespace. The context deadline, if set, is
-// applied to the underlying network connection for both the write and read
-// operations.
+// (newline by default) is automatically added to the query command. The
+// trailing endmark character is stripped from the response. The context
+// deadline, if set, is applied to the underlying network connection for both
+// the write and read operations.
 func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 	err := d.Command(ctx, cmd)
 	if err != nil {
@@ -122,7 +122,11 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 		return "", err
 	}
 	defer cleanup()
-	return d.rd.ReadString(d.EndMark)
+	s, err := d.rd.ReadString(d.EndMark)
+	if err != nil {
+		return s, err
+	}
+	return strings.TrimSuffix(s, string(d.EndMark)), nil
 }
 
 // applyContext sets a deadline on the connection using the provided setter and
