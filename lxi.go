@@ -44,6 +44,9 @@ func NewDevice(ctx context.Context, address string) (*Device, error) {
 
 // Close closes the underlying network connection.
 func (d *Device) Close() error {
+	if d.conn == nil {
+		return nil
+	}
 	d.rd = nil
 	c := d.conn
 	d.conn = nil

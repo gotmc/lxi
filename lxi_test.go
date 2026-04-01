@@ -201,6 +201,17 @@ func TestClose(t *testing.T) {
 	}
 }
 
+func TestDoubleClose(t *testing.T) {
+	dev, _ := newTestDevice(t)
+
+	if err := dev.Close(); err != nil {
+		t.Fatalf("first Close error: %v", err)
+	}
+	if err := dev.Close(); err != nil {
+		t.Fatalf("second Close error: %v", err)
+	}
+}
+
 func TestWriteAndRead(t *testing.T) {
 	dev, remote := newTestDevice(t)
 
