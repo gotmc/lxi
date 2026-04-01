@@ -70,25 +70,25 @@ func TestParsingVisaResourceString(t *testing.T) {
 			name:           "invalid interface type",
 			resourceString: "GPIB0::10.12.100.15::5025::SOCKET",
 			isError:        true,
-			errorSubstring: "interface type",
+			errorSubstring: "does not match",
 		},
 		{
 			name:           "invalid resource class",
 			resourceString: "TCPIP0::10.12.100.15::5025::INSTR",
 			isError:        true,
-			errorSubstring: "interface type",
+			errorSubstring: "does not match",
 		},
 		{
 			name:           "empty string",
 			resourceString: "",
 			isError:        true,
-			errorSubstring: "interface type",
+			errorSubstring: "does not match",
 		},
 		{
 			name:           "missing port and resource class",
 			resourceString: "TCPIP0::10.12.100.15",
 			isError:        true,
-			errorSubstring: "interface type",
+			errorSubstring: "does not match",
 		},
 	}
 	for _, tc := range testCases {

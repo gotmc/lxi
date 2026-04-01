@@ -37,6 +37,9 @@ func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
 
 	re := visaResourceRe
 	res := re.FindStringSubmatch(strings.ToUpper(resourceString))
+	if res == nil {
+		return visa, errors.New("visa: resource string does not match expected format")
+	}
 	subexpNames := re.SubexpNames()
 	matchMap := map[string]string{}
 	for i, n := range res {
