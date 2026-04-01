@@ -37,15 +37,11 @@ var visaResourceRe = regexp.MustCompile(
 )
 
 // NewVisaResource creates a new VisaResource using the given VISA resourceString.
-func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
-	visa = &VisaResource{
-		resourceString: resourceString,
-	}
-
+func NewVisaResource(resourceString string) (*VisaResource, error) {
 	re := visaResourceRe
 	res := re.FindStringSubmatch(strings.ToUpper(resourceString))
 	if res == nil {
-		return visa, errors.New("visa: resource string does not match expected format")
+		return nil, errors.New("visa: resource string does not match expected format")
 	}
 	subexpNames := re.SubexpNames()
 	matchMap := map[string]string{}
@@ -54,32 +50,36 @@ func NewVisaResource(resourceString string) (visa *VisaResource, err error) {
 	}
 
 	if matchMap["interfaceType"] != "TCPIP" {
-		return visa, errors.New("visa: interface type was not TCPIP")
+		return nil, errors.New("visa: interface type was not TCPIP")
 	}
-	visa.interfaceType = "TCPIP"
 
 	if matchMap["resourceClass"] != "SOCKET" {
-		return visa, errors.New("visa: resource class was not SOCKET")
+		return nil, errors.New("visa: resource class was not SOCKET")
 	}
-	visa.resourceClass = "SOCKET"
+
+	visa := &VisaResource{
+		resourceString: resourceString,
+		interfaceType:  "TCPIP",
+		resourceClass:  "SOCKET",
+	}
 
 	if matchMap["boardIndex"] != "" {
 		boardIndex, err := strconv.ParseUint(matchMap["boardIndex"], 0, 16)
 		if err != nil {
-			return visa, errors.New("visa: boardIndex error")
+			return nil, errors.New("visa: boardIndex error")
 		}
 		visa.boardIndex = uint(boardIndex)
 	}
 
 	if matchMap["hostAddress"] == "" {
-		return visa, errors.New("visa: host address is required")
+		return nil, errors.New("visa: host address is required")
 	}
 	visa.hostAddress = matchMap["hostAddress"]
 
 	if matchMap["port"] != "" {
 		port, err := strconv.ParseUint(matchMap["port"], 10, 64)
 		if err != nil {
-			return visa, errors.New("visa: port error")
+			return nil, errors.New("visa: port error")
 		}
 		visa.port = uint(port)
 	}
