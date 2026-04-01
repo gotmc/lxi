@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Go package implementing the LAN eXtensions for Instrumentation (LXI) standard for sending SCPI commands to test equipment over TCP/IP. Part of the gotmc ecosystem alongside [ivi](https://github.com/gotmc/ivi) and [visa](https://github.com/gotmc/visa) packages.
+Go package implementing the LAN eXtensions for Instrumentation (LXI) standard for sending SCPI commands to test equipment over TCP/IP. Part of the gotmc ecosystem: [visa](https://github.com/gotmc/visa) defines a common instrument interface across transports (GPIB, USB, TCP/IP, serial), [asrl](https://github.com/gotmc/asrl) provides serial transport, and [ivi](https://github.com/gotmc/ivi) builds on visa for standardized instrument-class APIs per IVI Foundation specs.
 
 ## Build & Test Commands
 
@@ -28,6 +28,14 @@ just cover
 
 # Run single test
 go test -run TestParsingVisaResourceString ./...
+
+# Dependency management
+just tidy          # go mod tidy + verify
+just outdated      # list outdated direct deps (requires go-mod-outdated)
+just update <mod>  # update a specific module
+
+# Run example against real hardware
+just k33220 192.168.1.101
 ```
 
 ## Architecture
