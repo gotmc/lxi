@@ -125,3 +125,26 @@ func TestParsingVisaResourceString(t *testing.T) {
 		})
 	}
 }
+
+func TestVisaResourceStringRoundTrip(t *testing.T) {
+	inputs := []string{
+		"TCPIP0::192.168.1.100::5025::SOCKET",
+		"TCPIP1::10.0.0.1::7777::SOCKET",
+		"TCPIP0::MY-INSTRUMENT::5025::SOCKET",
+	}
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			v, err := NewVisaResource(input)
+			if err != nil {
+				t.Fatalf("NewVisaResource(%q) error: %v", input, err)
+			}
+			roundTripped, err := NewVisaResource(v.String())
+			if err != nil {
+				t.Fatalf("NewVisaResource(%q) round-trip error: %v", v.String(), err)
+			}
+			if v.String() != roundTripped.String() {
+				t.Errorf("round-trip mismatch: %q != %q", v.String(), roundTripped.String())
+			}
+		})
+	}
+}
