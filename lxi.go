@@ -153,11 +153,10 @@ func (d *Device) applyContext(
 	default:
 	}
 	done := make(chan struct{})
-	conn := d.conn
 	go func() {
 		select {
 		case <-ctx.Done():
-			_ = conn.SetDeadline(time.Now())
+			_ = setDeadline(time.Now())
 		case <-done:
 		}
 	}()
