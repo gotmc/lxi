@@ -74,7 +74,11 @@ func (d *Device) ReadContext(ctx context.Context, p []byte) (n int, err error) {
 		return 0, err
 	}
 	defer cleanup()
-	return d.rd.Read(p)
+	n, err = d.rd.Read(p)
+	if err != nil && ctx.Err() != nil {
+		return n, ctx.Err()
+	}
+	return n, err
 }
 
 // ReadStringContext reads from the network connection until the EndMark
@@ -86,7 +90,11 @@ func (d *Device) ReadStringContext(ctx context.Context) (string, error) {
 		return "", err
 	}
 	defer cleanup()
-	return d.rd.ReadString(d.EndMark)
+	s, err := d.rd.ReadString(d.EndMark)
+	if err != nil && ctx.Err() != nil {
+		return s, ctx.Err()
+	}
+	return s, err
 }
 
 // WriteContext writes the given data to the network connection in a context
@@ -97,7 +105,11 @@ func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) 
 		return 0, err
 	}
 	defer cleanup()
-	return d.conn.Write(p)
+	n, err = d.conn.Write(p)
+	if err != nil && ctx.Err() != nil {
+		return n, ctx.Err()
+	}
+	return n, err
 }
 
 // WriteStringContext writes a string to the underlying network connection in a

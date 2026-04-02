@@ -20,7 +20,7 @@ just unit
 # Verbose unit tests
 just unit -v
 
-# Lint (requires golangci-lint, configured via .golangci.yaml)
+# Lint (requires golangci-lint v2, configured via .golangci.yaml)
 just lint
 
 # Test coverage (opens HTML report)
@@ -42,16 +42,16 @@ just k33220 192.168.1.101
 
 The package has two core types:
 
-- **`Device`** (`lxi.go`): Wraps a TCP connection to an LXI instrument. Implements `io.Reader`, `io.Writer`, `io.Closer`, and `io.StringWriter`. Provides `Command(ctx, ...)` (auto-appends EndMark) and `Query(ctx, cmd)` (sends command, reads response) for SCPI communication. Also provides `ReadContext` and `WriteContext` for context-aware raw I/O.
-- **`VisaResource`** (`visa.go`): Parses VISA resource strings (format: `TCPIP<board>::<host>::<port>::SOCKET`) using a package-level compiled regex. Only TCPIP/SOCKET interface type is supported.
+- **`Device`** (`lxi.go`): Wraps a TCP connection to an LXI instrument. Implements `io.Reader`, `io.Writer`, `io.Closer`, and `io.StringWriter`. High-level SCPI methods: `Command(ctx, ...)` auto-appends the EndMark character, and `Query(ctx, cmd)` sends a command then reads the response (stripping the trailing EndMark). Context-aware raw I/O: `ReadContext`, `WriteContext`, `ReadStringContext` (reads until EndMark delimiter), and `WriteStringContext`. Non-context `Read`, `Write`, and `WriteString` delegate to their context-aware counterparts with `context.Background()`.
+- **`VisaResource`** (`visa.go`): Parses VISA resource strings (format: `TCPIP<board>::<host>::<port>::SOCKET`) using a package-level compiled regex. Only TCPIP/SOCKET interface type is supported. Input is case-insensitive; output is always uppercase canonical form.
 
-`NewDevice()` takes a VISA address string, parses it via `NewVisaResource()`, then dials a TCP connection.
+`NewDevice(ctx, address)` parses the address via `NewVisaResource()`, then dials a TCP connection using the context for timeout/cancellation.
 
 The internal `applyContext` method is the key context-handling mechanism: it sets connection deadlines from context deadlines, and for cancelable contexts without deadlines, spawns a goroutine that watches for cancellation and forces an immediate deadline to unblock pending I/O. The returned cleanup function stops the goroutine and resets the deadline.
 
 ## Conventions
 
-- **Zero external dependencies** — only the Go standard library is used.
-- **Error prefixes** — errors use the format `"visa: ..."` or `"lxi: ..."` to identify their origin.
-- **Context handling** — `Command`, `Query`, `ReadContext`, and `WriteContext` apply context deadlines/cancellation to the TCP connection via `applyContext`.
-- **Test pattern** — table-driven tests with structs defining inputs and expected outputs. Tests use `net.Pipe` for in-process TCP simulation (see `newTestDevice` in `lxi_test.go`).
+- **Zero external dependencies** — only the Go standard library is used (Go 1.21+).
+- **Error prefixes** — errors use the format `"visa: ..."` or `"lxi: ..."` to identify their origin. Sentinel errors are defined in `visa.go` and use `%w` wrapping for `errors.Is()` checking.
+- **Context handling** — `Command`, `Query`, `ReadContext`, `WriteContext`, `ReadStringContext`, and `WriteStringContext` apply context deadlines/cancellation to the TCP connection via `applyContext`. When context cancellation causes an I/O error, the context error (`context.Canceled` / `context.DeadlineExceeded`) is returned instead of the raw network timeout, following the `net.Dialer.DialContext` pattern.
+- **Test pattern** — table-driven tests with structs defining inputs and expected outputs. Tests use `net.Pipe` for in-process TCP simulation via `newTestDevice` helper in `lxi_test.go`.
