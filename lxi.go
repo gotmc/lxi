@@ -77,6 +77,18 @@ func (d *Device) ReadContext(ctx context.Context, p []byte) (n int, err error) {
 	return d.rd.Read(p)
 }
 
+// ReadStringContext reads from the network connection until the EndMark
+// delimiter is found, returning the string including the delimiter. The context
+// deadline, if set, is applied to the underlying network connection.
+func (d *Device) ReadStringContext(ctx context.Context) (string, error) {
+	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	return d.rd.ReadString(d.EndMark)
+}
+
 // WriteContext writes the given data to the network connection in a context
 // aware manner.
 func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) {
@@ -88,21 +100,23 @@ func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) 
 	return d.conn.Write(p)
 }
 
+// WriteStringContext writes a string to the underlying network connection in a
+// context aware manner. An endmark character, such as a newline, is not
+// automatically added to the end of the string.
+func (d *Device) WriteStringContext(ctx context.Context, s string) (n int, err error) {
+	return d.WriteContext(ctx, []byte(s))
+}
+
 // Command sends a SCPI/ASCII command to the underlying network connection. The
 // command can be optionally formatted according to a format specifier. An
 // endmark character, such as newline, is automatically added to the end of the
 // string. The context deadline, if set, is applied to the underlying network
 // connection.
 func (d *Device) Command(ctx context.Context, cmd string, a ...any) error {
-	cleanup, err := d.applyContext(ctx, d.conn.SetWriteDeadline)
-	if err != nil {
-		return err
-	}
-	defer cleanup()
 	if len(a) > 0 {
 		cmd = fmt.Sprintf(cmd, a...)
 	}
-	_, err = d.WriteString(strings.TrimSpace(cmd) + string(d.EndMark))
+	_, err := d.WriteStringContext(ctx, strings.TrimSpace(cmd)+string(d.EndMark))
 	return err
 }
 
@@ -117,12 +131,7 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
-	if err != nil {
-		return "", err
-	}
-	defer cleanup()
-	s, err := d.rd.ReadString(d.EndMark)
+	s, err := d.ReadStringContext(ctx)
 	if err != nil {
 		return s, err
 	}
