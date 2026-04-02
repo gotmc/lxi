@@ -230,6 +230,80 @@ func TestWriteAndRead(t *testing.T) {
 	}
 }
 
+func TestReadContext(t *testing.T) {
+	dev, remote := newTestDevice(t)
+
+	msg := []byte("context data")
+	go func() {
+		_, _ = remote.Write(msg)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	buf := make([]byte, 64)
+	n, err := dev.ReadContext(ctx, buf)
+	if err != nil {
+		t.Fatalf("ReadContext error: %v", err)
+	}
+	if string(buf[:n]) != string(msg) {
+		t.Errorf("ReadContext got %q, want %q", string(buf[:n]), string(msg))
+	}
+}
+
+func TestReadContextCanceled(t *testing.T) {
+	dev, _ := newTestDevice(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	buf := make([]byte, 64)
+	_, err := dev.ReadContext(ctx, buf)
+	if err == nil {
+		t.Fatal("expected error from ReadContext with canceled context")
+	}
+}
+
+func TestWriteContext(t *testing.T) {
+	dev, remote := newTestDevice(t)
+
+	msg := []byte("context write")
+	done := make(chan string, 1)
+	go func() {
+		buf := make([]byte, 64)
+		n, _ := remote.Read(buf)
+		done <- string(buf[:n])
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	n, err := dev.WriteContext(ctx, msg)
+	if err != nil {
+		t.Fatalf("WriteContext error: %v", err)
+	}
+	if n != len(msg) {
+		t.Errorf("WriteContext returned n=%d, want %d", n, len(msg))
+	}
+
+	got := <-done
+	if got != string(msg) {
+		t.Errorf("WriteContext sent %q, want %q", got, string(msg))
+	}
+}
+
+func TestWriteContextCanceled(t *testing.T) {
+	dev, _ := newTestDevice(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := dev.WriteContext(ctx, []byte("data"))
+	if err == nil {
+		t.Fatal("expected error from WriteContext with canceled context")
+	}
+}
+
 func TestDeviceImplementsInterfaces(t *testing.T) {
 	dev, _ := newTestDevice(t)
 
