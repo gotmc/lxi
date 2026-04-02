@@ -51,12 +51,12 @@ func (d *Device) Close() error {
 
 // Read reads from the network connection into the given byte slice.
 func (d *Device) Read(p []byte) (n int, err error) {
-	return d.rd.Read(p)
+	return d.ReadContext(context.Background(), p)
 }
 
 // Write writes the given data to the network connection.
 func (d *Device) Write(p []byte) (n int, err error) {
-	return d.conn.Write(p)
+	return d.WriteContext(context.Background(), p)
 }
 
 // WriteString writes a string to the underlying network connection. An endmark
