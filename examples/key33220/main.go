@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/gotmc/lxi"
 )
@@ -27,11 +28,13 @@ func main() {
 	)
 	flag.Parse()
 
-	// Create a new LXI device
+	// Create a new LXI device with a timeout for the initial connection.
 	ctx := context.Background()
+	connCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	address := fmt.Sprintf("TCPIP0::%s::5025::SOCKET", ip)
 	log.Printf("Using VISA address: %s", address)
-	fg, err := lxi.NewDevice(ctx, address)
+	fg, err := lxi.NewDevice(connCtx, address)
 	if err != nil {
 		log.Fatalf("NewDevice error: %s", err)
 	}
