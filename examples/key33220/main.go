@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gotmc/lxi"
+	"github.com/gotmc/query"
 )
 
 func main() {
@@ -65,9 +66,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Query using query package, which appends an endmark.
+	queries := []string{"volt", "freq", "volt:offs"}
+	queryValues(ctx, fg, queries)
+
 	// Query using lxi.Query, which does append an endmark.
-	queries := []string{"volt", "freq", "volt:offs", "volt:unit"}
-	queryRange(ctx, fg, queries)
+	queries = []string{"func", "outp", "volt:unit"}
+	queryStrings(ctx, fg, queries)
 
 	// Close the function generator and check for errors.
 	err = fg.Close()
@@ -76,16 +81,25 @@ func main() {
 	}
 }
 
-func queryRange(ctx context.Context, fg *lxi.Device, r []string) {
+func queryStrings(ctx context.Context, fg *lxi.Device, r []string) {
 	for _, q := range r {
-		ws := fmt.Sprintf("%s?", q)
-		log.Printf("Querying %s", ws)
-		s, err := fg.Query(ctx, ws)
-		log.Printf("Completed %s query", ws)
+		cmd := fmt.Sprintf("%s?", q)
+		s, err := fg.Query(ctx, cmd)
 		if err != nil {
 			log.Printf("Error reading: %v", err)
 		} else {
 			log.Printf("Query %s? = %s", q, s)
+		}
+	}
+}
+
+func queryValues(ctx context.Context, fg *lxi.Device, cmds []string) {
+	for _, cmd := range cmds {
+		result, err := query.Float64f(ctx, fg, "%s?", cmd)
+		if err != nil {
+			log.Printf("Error reading: %v", err)
+		} else {
+			log.Printf("Query %s? = %.3g", cmd, result)
 		}
 	}
 }
