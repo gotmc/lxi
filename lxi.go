@@ -15,7 +15,7 @@ import (
 )
 
 // Device models an LXI device, which is currently just a TCPIP socket
-// interface. An LXI Device also implements the ivi.Driver interface.
+// interface. An LXI Device implements the ivi.Transport interface.
 type Device struct {
 	EndMark byte
 	conn    net.Conn
@@ -51,12 +51,12 @@ func (d *Device) Close() error {
 
 // Read reads from the network connection into the given byte slice.
 func (d *Device) Read(p []byte) (n int, err error) {
-	return d.ReadContext(context.Background(), p)
+	return d.ReadBinary(context.Background(), p)
 }
 
 // Write writes the given data to the network connection.
 func (d *Device) Write(p []byte) (n int, err error) {
-	return d.WriteContext(context.Background(), p)
+	return d.WriteBinary(context.Background(), p)
 }
 
 // WriteString writes a string to the underlying network connection. An endmark
@@ -66,9 +66,9 @@ func (d *Device) WriteString(s string) (n int, err error) {
 	return d.Write([]byte(s))
 }
 
-// ReadContext reads from the network connection in the given byte slice in a
-// context aware manner.
-func (d *Device) ReadContext(ctx context.Context, p []byte) (n int, err error) {
+// ReadBinary reads binary data from the network connection without terminator
+// interpretation.
+func (d *Device) ReadBinary(ctx context.Context, p []byte) (n int, err error) {
 	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
 	if err != nil {
 		return 0, err
@@ -81,25 +81,9 @@ func (d *Device) ReadContext(ctx context.Context, p []byte) (n int, err error) {
 	return n, err
 }
 
-// ReadStringContext reads from the network connection until the EndMark
-// delimiter is found, returning the string including the delimiter. The context
-// deadline, if set, is applied to the underlying network connection.
-func (d *Device) ReadStringContext(ctx context.Context) (string, error) {
-	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
-	if err != nil {
-		return "", err
-	}
-	defer cleanup()
-	s, err := d.rd.ReadString(d.EndMark)
-	if err != nil && ctx.Err() != nil {
-		return s, ctx.Err()
-	}
-	return s, err
-}
-
-// WriteContext writes the given data to the network connection in a context
-// aware manner.
-func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) {
+// WriteBinary writes binary data to the network connection without adding a
+// terminator.
+func (d *Device) WriteBinary(ctx context.Context, p []byte) (n int, err error) {
 	cleanup, err := d.applyContext(ctx, d.conn.SetWriteDeadline)
 	if err != nil {
 		return 0, err
@@ -112,11 +96,20 @@ func (d *Device) WriteContext(ctx context.Context, p []byte) (n int, err error) 
 	return n, err
 }
 
-// WriteStringContext writes a string to the underlying network connection in a
-// context aware manner. An endmark character, such as a newline, is not
-// automatically added to the end of the string.
-func (d *Device) WriteStringContext(ctx context.Context, s string) (n int, err error) {
-	return d.WriteContext(ctx, []byte(s))
+// readString reads from the network connection until the EndMark delimiter is
+// found, returning the string including the delimiter. The context deadline, if
+// set, is applied to the underlying network connection.
+func (d *Device) readString(ctx context.Context) (string, error) {
+	cleanup, err := d.applyContext(ctx, d.conn.SetReadDeadline)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	s, err := d.rd.ReadString(d.EndMark)
+	if err != nil && ctx.Err() != nil {
+		return s, ctx.Err()
+	}
+	return s, err
 }
 
 // Command sends a SCPI/ASCII command to the underlying network connection. The
@@ -128,7 +121,7 @@ func (d *Device) Command(ctx context.Context, cmd string, a ...any) error {
 	if len(a) > 0 {
 		cmd = fmt.Sprintf(cmd, a...)
 	}
-	_, err := d.WriteStringContext(ctx, strings.TrimSpace(cmd)+string(d.EndMark))
+	_, err := d.WriteBinary(ctx, []byte(strings.TrimSpace(cmd)+string(d.EndMark)))
 	return err
 }
 
@@ -143,7 +136,7 @@ func (d *Device) Query(ctx context.Context, cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s, err := d.ReadStringContext(ctx)
+	s, err := d.readString(ctx)
 	if err != nil {
 		return s, err
 	}
