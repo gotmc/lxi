@@ -42,7 +42,7 @@ just k33220 192.168.1.101
 
 The package has two core types:
 
-- **`Device`** (`lxi.go`): Wraps a TCP connection to an LXI instrument. Implements `io.Reader`, `io.Writer`, `io.Closer`, and `io.StringWriter`. High-level SCPI methods: `Command(ctx, ...)` auto-appends the EndMark character, and `Query(ctx, cmd)` sends a command then reads the response (stripping the trailing EndMark). Context-aware raw I/O: `ReadContext`, `WriteContext`, `ReadStringContext` (reads until EndMark delimiter), and `WriteStringContext`. Non-context `Read`, `Write`, and `WriteString` delegate to their context-aware counterparts with `context.Background()`.
+- **`Device`** (`lxi.go`): Wraps a TCP connection to an LXI instrument. Implements `io.Reader`, `io.Writer`, `io.Closer`, and `io.StringWriter`. High-level SCPI methods: `Command(ctx, ...)` auto-appends the EndMark character, and `Query(ctx, cmd)` sends a command then reads the response (stripping the trailing EndMark). Context-aware binary I/O: `ReadBinary` and `WriteBinary`. Non-context `Read`, `Write`, and `WriteString` delegate to their context-aware counterparts with `context.Background()`.
 - **`VisaResource`** (`visa.go`): Parses VISA resource strings (format: `TCPIP<board>::<host>::<port>::SOCKET`) using a package-level compiled regex. Only TCPIP/SOCKET interface type is supported. Input is case-insensitive; output is always uppercase canonical form.
 
 `NewDevice(ctx, address)` parses the address via `NewVisaResource()`, then dials a TCP connection using the context for timeout/cancellation.
@@ -51,7 +51,7 @@ The internal `applyContext` method is the key context-handling mechanism: it set
 
 ## Conventions
 
-- **Zero external dependencies** — only the Go standard library is used (Go 1.21+).
+- **Zero external dependencies** — the library itself uses only the Go standard library (Go 1.21+). The `gotmc/query` dependency in `go.mod` is used only by the example application in `examples/`.
 - **Error prefixes** — errors use the format `"visa: ..."` or `"lxi: ..."` to identify their origin. Sentinel errors are defined in `visa.go` and use `%w` wrapping for `errors.Is()` checking.
-- **Context handling** — `Command`, `Query`, `ReadContext`, `WriteContext`, `ReadStringContext`, and `WriteStringContext` apply context deadlines/cancellation to the TCP connection via `applyContext`. When context cancellation causes an I/O error, the context error (`context.Canceled` / `context.DeadlineExceeded`) is returned instead of the raw network timeout, following the `net.Dialer.DialContext` pattern.
+- **Context handling** — `Command`, `Query`, `ReadBinary`, and `WriteBinary` apply context deadlines/cancellation to the TCP connection via `applyContext`. When context cancellation causes an I/O error, the context error (`context.Canceled` / `context.DeadlineExceeded`) is returned instead of the raw network timeout, following the `net.Dialer.DialContext` pattern.
 - **Test pattern** — table-driven tests with structs defining inputs and expected outputs. Tests use `net.Pipe` for in-process TCP simulation via `newTestDevice` helper in `lxi_test.go`.
