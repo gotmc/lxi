@@ -76,7 +76,7 @@ func (d *Device) ReadBinary(ctx context.Context, p []byte) (n int, err error) {
 	defer cleanup()
 	n, err = d.rd.Read(p)
 	if err != nil && ctx.Err() != nil {
-		return n, ctx.Err()
+		return n, fmt.Errorf("%w: %w", ctx.Err(), err)
 	}
 	return n, err
 }
@@ -91,7 +91,7 @@ func (d *Device) WriteBinary(ctx context.Context, p []byte) (n int, err error) {
 	defer cleanup()
 	n, err = d.conn.Write(p)
 	if err != nil && ctx.Err() != nil {
-		return n, ctx.Err()
+		return n, fmt.Errorf("%w: %w", ctx.Err(), err)
 	}
 	return n, err
 }
@@ -107,7 +107,7 @@ func (d *Device) readString(ctx context.Context) (string, error) {
 	defer cleanup()
 	s, err := d.rd.ReadString(d.EndMark)
 	if err != nil && ctx.Err() != nil {
-		return s, ctx.Err()
+		return s, fmt.Errorf("%w: %w", ctx.Err(), err)
 	}
 	return s, err
 }
